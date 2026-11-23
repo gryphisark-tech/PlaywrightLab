@@ -1,9 +1,11 @@
 ﻿using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.IO;
 using Microsoft.Playwright;
 using Microsoft.Playwright.NUnit;
 using NUnit.Framework;
 using NUnit.Framework.Internal;
+using NUnit.Framework.Interfaces;
 
 namespace PlaywrightLab;
 
@@ -42,12 +44,12 @@ public class TodoTests : PageTest
     [Test]
     public async Task CanCompleteATodo()
     {
-        await AddTodoAsync( "Wash the car");
+        await AddTodoAsync("Wash the car");
 
         await Todo("Wash the car").GetByRole(AriaRole.Checkbox).CheckAsync();
 
         await Expect(Todo("Wash the car").GetByRole(AriaRole.Checkbox)).ToBeCheckedAsync();
-         await Expect(Page.GetByText("0 item left")).ToBeVisibleAsync();
+        await Expect(Page.GetByText("0 items left")).ToBeVisibleAsync();
 
     }
 
@@ -62,11 +64,14 @@ public class TodoTests : PageTest
 
         await Page.GetByRole(AriaRole.Link, new() { Name = "Active" }).ClickAsync();
         await Expect(Page).ToHaveURLAsync(new Regex("#/active$"));
-        await Expect(TodoTitles).ToHaveTextAsync(new[] { "Buy an apple", "Call the doctor "});
+        await Expect(TodoTitles).ToHaveTextAsync(new[] { "Buy an apple", "Call the doctor" });
 
         await Page.GetByRole(AriaRole.Link, new() { Name = "Completed" }).ClickAsync();
         await Expect(Page).ToHaveURLAsync(new Regex("#/completed$"));
-        await Expect(TodoTitles).ToHaveTextAsync(new[] { "Buy an apple", "Wash the car", "Call the doctor "});
+        await Expect(TodoTitles).ToHaveTextAsync(new[] { "Wash the car" });
+
+        await Page.GetByRole(AriaRole.Link, new() { Name = "All" }).ClickAsync();
+        await Expect(TodoTitles).ToHaveTextAsync(new[] { "Buy an apple", "Wash the car", "Call the doctor" });
     }
 
 [Test]
@@ -79,8 +84,8 @@ public class TodoTests : PageTest
         await Todo("Buy an apple").GetByRole(AriaRole.Checkbox).CheckAsync();
         await Todo("Call the doctor").GetByRole(AriaRole.Checkbox).CheckAsync();
 
-        var clearCompleted = Page.GetByRole(AriaRole.Button, new() { Name = "Clear completed"});
-        await Expect(clearCompleted).ToHaveTextAsync(new[] { "Wash the car"});
+        var clearCompleted = Page.GetByRole(AriaRole.Button, new() { Name = "Clear completed" });
+        await Expect(clearCompleted).ToBeVisibleAsync();
         await clearCompleted.ClickAsync();
 
         await Expect(TodoTitles).ToHaveTextAsync (new[] { "Wash the car"});
